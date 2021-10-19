@@ -1,5 +1,3 @@
-package day7;
-
 public class MessageStoC_Exit extends Message {
     public String userName;
 
