@@ -1,5 +1,3 @@
-package day7;
-
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.ServerSocket;
