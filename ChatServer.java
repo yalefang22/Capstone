@@ -11,7 +11,9 @@ import java.util.concurrent.Executors;
 public class ChatServer {
     public static final int PORT = 54323;
     private static final ArrayList<ClientConnectionData> clientArrayList = new ArrayList<>();
-    //Make this a thread-safe collection 
+    public static int yesKickVotes = 0;
+    public static int noKickVotes = 0;
+    //Make this a thread-safe collection
     private static final List<ClientConnectionData> clientList = Collections.synchronizedList(clientArrayList);
 
     public static void main(String[] args) throws Exception {
@@ -30,8 +32,8 @@ public class ChatServer {
 
                     // handle client business in another thread
                     pool.execute(new ChatServerSocketListener(socket, clientList));
-                } 
-                
+                }
+
                 // prevent exceptions from causing server from exiting.
                 catch (IOException ex) {
                     System.out.println(ex.getMessage());
