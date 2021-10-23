@@ -14,7 +14,9 @@ public class ChatServerSocketListener  implements Runnable {
     private List<ClientConnectionData> clientList;
     private List<String> clientListNames;
     private boolean runningVoteKick;
-    private int votes = 0;
+    private int yesVotes = 0;
+    private int noVotes = 0;
+    private ClientConnectionData userToKick;
 
     public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList) {
         this.socket = socket;
@@ -63,42 +65,73 @@ public class ChatServerSocketListener  implements Runnable {
             return;
         }
         if (m.boolVote) {
-            votes++;
+            yesVotes++;
             broadcast(new MessageStoC_Chat(client.getUserName() + " voted yes!"));
             client.setVoted(true);
-            checkVotes();
+            checkVotes(userToKick);
         }
         else {
+            noVotes++;
             broadcast(new MessageStoC_Chat(client.getUserName() + " voted no!"));
             client.setVoted(true);
-            checkVotes();
+            checkVotes(userToKick);
         }
     }
 
     private void callVoteKick(String m) {
-        String userToKick = "";
+
+        String u = "";
         try {
-            userToKick = m.substring(6);
+            u = m.substring(6);
         } catch (StringIndexOutOfBoundsException e) {
             broadcast(new MessageStoC_Chat("User does not exist!"));
             return;
         }
-        if (!clientListNames.contains(userToKick)) {
+        if (!clientListNames.contains(u)) {
             broadcast(new MessageStoC_Chat("User does not exist!"));
         }
         else {
-            String message = "Vote kick has started! " + clientListNames.size()/2 + " votes are necessary to kick " + userToKick;
-            votes=0;
+            String message = "Vote kick has started! " + clientListNames.size()/2 + " yesVotes are necessary to kick " + u;
+            for (int i = 0; i < clientList.size(); i++) {
+                if (clientList.get(i).getUserName().equals(u)) {
+                    userToKick = clientList.get(i);
+                }
+                clientList.get(i).setVoted(false);
+            }
+            yesVotes=0;
+            noVotes=0;
             runningVoteKick = true;
-            broadcast(new MessageStoC_Chat("Vote kick has started! Vote with \"/vote yes\" or \"/vote no\" to kick " + userToKick));
-            checkVotes();
+            broadcast(new MessageStoC_Chat("Vote kick has started! Vote with \"/vote yes\" or \"/vote no\" to kick " + u));
+            for (int i = 0; i < clientList.size(); i++) {
+                if (clientList.get(i).getUserName().equals(u)) {
+                    userToKick = clientList.get(i);
+                }
+            }
+            checkVotes(userToKick);
 
         }
     }
 
-    private void checkVotes() {
-        if (votes > clientList.size()/2) {
+    private void checkVotes(ClientConnectionData u) {
+        if (yesVotes > clientList.size() / 2) {
+            //Remove client from clientList
+            clientList.remove(u);
+            clientListNames.remove(u.getUserName());
 
+            // Notify everyone that the user left.
+            broadcast(new MessageStoC_Exit(u.getUserName()));
+
+            try {
+                u.getSocket().close();
+            } catch (IOException ex) {
+            }
+        }
+        if (noVotes > clientList.size()/2) {
+            if (noVotes == 1) {
+                broadcast(new MessageStoC_Chat(noVotes + " person voted no! " + u.getUserName() + " will not be kicked!"));
+            }
+            else
+                broadcast(new MessageStoC_Chat(noVotes + " people voted no! " + u.getUserName() + " will not be kicked!"));
         }
     }
 
@@ -177,7 +210,7 @@ public class ChatServerSocketListener  implements Runnable {
             clientListNames.remove(client.getUserName());
 
             // Notify everyone that the user left.
-            broadcast(new MessageStoC_Exit(client.getUserName()));
+            broadcast(new MessageStoC_Exit(client.getUserName()), client);
 
             try {
                 client.getSocket().close();
