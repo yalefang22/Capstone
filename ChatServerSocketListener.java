@@ -13,13 +13,17 @@ public class ChatServerSocketListener  implements Runnable {
 
     private ClientConnectionData client;
     private List<ClientConnectionData> clientList;
+    //private boolean runningVoteKick;
+    private List<Boolean> placeHolder;
     private int yesVotes = 0;
     private int noVotes = 0;
     private ClientConnectionData userToKick;
 
-    public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList) {
+    public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList, List<Boolean> placeHolder) {
         this.socket = socket;
         this.clientList = clientList;
+        this.placeHolder = placeHolder;
+        //this.runningVoteKick = placeHolder.get(0);
     }
 
 
@@ -53,10 +57,15 @@ public class ChatServerSocketListener  implements Runnable {
     }
 
     private void processVoteMessage(MessageCtoS_Vote m) {
-        if (!clientList.get(0).getVoted()) {
+        /*if (!runningVoteKick) {
+            broadcast(new MessageStoC_Chat("No vote is running!"));
+            return;
+        }*/
+        if (!placeHolder.get(0)) {
             broadcast(new MessageStoC_Chat("No vote is running!"));
             return;
         }
+
         if (client.getVoted()) {
             broadcast(new MessageStoC_Chat(client.getUserName() + " has already voted!"));
             return;
@@ -104,7 +113,8 @@ public class ChatServerSocketListener  implements Runnable {
             }
             yesVotes=0;
             noVotes=0;
-            clientList.get(0).setVoted(true);
+            //runningVoteKick = true;
+            placeHolder.set(0, true);
 
             int votesNecessary = 1 + clientList.size()/2;
             if (votesNecessary == 1)
@@ -126,6 +136,7 @@ public class ChatServerSocketListener  implements Runnable {
         if (yesVotes > clientList.size() / 2) {
             //Remove client from clientList
             broadcast(new MessageStoC_Chat(u.getUserName() + " will be kicked!"));
+            placeHolder.set(0, false);
             clientList.remove(u);
 
             // Notify everyone that the user left.
@@ -138,9 +149,12 @@ public class ChatServerSocketListener  implements Runnable {
         if (noVotes > clientList.size()/2) {
             if (noVotes == 1) {
                 broadcast(new MessageStoC_Chat(noVotes + " person voted no! " + u.getUserName() + " will not be kicked!"));
+                placeHolder.set(0, false);
             }
-            else
+            else {
                 broadcast(new MessageStoC_Chat(noVotes + " people voted no! " + u.getUserName() + " will not be kicked!"));
+                placeHolder.set(0, false);
+            }
         }
     }
 
