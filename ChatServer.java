@@ -1,3 +1,5 @@
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.ServerSocket;
@@ -15,7 +17,6 @@ public class ChatServer {
     public static int noKickVotes = 0;
     //Make this a thread-safe collection
     private static final List<ClientConnectionData> clientList = Collections.synchronizedList(clientArrayList);
-    private static final boolean runningVoteKick = false;
 
     public static void main(String[] args) throws Exception {
         ExecutorService pool = Executors.newFixedThreadPool(100);
@@ -32,7 +33,7 @@ public class ChatServer {
                             socket.getPort(), socket.getLocalPort());
 
                     // handle client business in another thread
-                    pool.execute(new ChatServerSocketListener(socket, clientList, runningVoteKick));
+                    pool.execute(new ChatServerSocketListener(socket, clientList));
                 }
 
                 // prevent exceptions from causing server from exiting.
