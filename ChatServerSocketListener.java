@@ -40,6 +40,7 @@ public class ChatServerSocketListener  implements Runnable {
                 System.out.print("Clients: ");
                 System.out.print(names + " ");
             }
+            System.out.println();
         }
         if (m.msg.startsWith("/kick")) {
             callVoteKick(m.msg);
@@ -52,12 +53,11 @@ public class ChatServerSocketListener  implements Runnable {
         try {
             userToKick = m.substring(6);
         } catch (StringIndexOutOfBoundsException e) {
-            System.out.println("User Does Not Exist!");
+            broadcast(new MessageStoC_Chat("Server", "User Does Not Exist!"), client);
             return;
         }
         if (!clientListNames.contains(userToKick)) {
-            //broadcast(new MessageCtoS_Chat("User Does Not Exist!"), client);
-            System.out.println("User Does Not Exist!");
+            broadcast(new MessageStoC_Chat("Server", "User Does Not Exist!"), client);
         }
     }
 
@@ -88,6 +88,7 @@ public class ChatServerSocketListener  implements Runnable {
 
             MessageCtoS_Join joinMessage = (MessageCtoS_Join)in.readObject();
             client.setUserName(joinMessage.userName);
+            clientListNames.add(client.getUserName());
             broadcast(new MessageStoC_Welcome(joinMessage.userName), client);
 
             while (true) {
