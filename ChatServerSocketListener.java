@@ -13,7 +13,6 @@ public class ChatServerSocketListener  implements Runnable {
 
     private ClientConnectionData client;
     private List<ClientConnectionData> clientList;
-    private boolean runningVoteKick;
     private int yesVotes = 0;
     private int noVotes = 0;
     private ClientConnectionData userToKick;
@@ -21,7 +20,6 @@ public class ChatServerSocketListener  implements Runnable {
     public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList) {
         this.socket = socket;
         this.clientList = clientList;
-        this.runningVoteKick = clientList.get(0).getVoted();
     }
 
 
@@ -55,7 +53,7 @@ public class ChatServerSocketListener  implements Runnable {
     }
 
     private void processVoteMessage(MessageCtoS_Vote m) {
-        if (!runningVoteKick) {
+        if (!clientList.get(0).getVoted()) {
             broadcast(new MessageStoC_Chat("No vote is running!"));
             return;
         }
@@ -106,7 +104,7 @@ public class ChatServerSocketListener  implements Runnable {
             }
             yesVotes=0;
             noVotes=0;
-            runningVoteKick = true;
+            clientList.get(0).setVoted(true);
 
             int votesNecessary = 1 + clientList.size()/2;
             if (votesNecessary == 1)
