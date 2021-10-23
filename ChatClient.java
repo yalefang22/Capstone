@@ -32,6 +32,9 @@ public class ChatClient {
 
         String line = in.nextLine().trim();
         while (!line.toLowerCase().startsWith("/quit")) {
+            if (line.toLowerCase().startsWith("/vote")) {
+                sendMessage(new MessageCtoS_Vote(line.substring(6)));
+            }
             sendMessage(new MessageCtoS_Chat(line));
             line = in.nextLine().trim();
         }

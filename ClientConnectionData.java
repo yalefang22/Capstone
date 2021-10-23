@@ -8,12 +8,14 @@ public class ClientConnectionData {
     private ObjectOutputStream out;
     private String name;
     private String userName;
+    private boolean voted;
 
     public ClientConnectionData(Socket socket, ObjectInputStream input, ObjectOutputStream out, String name) {
         this.socket = socket;
         this.input = input;
         this.out = out;
         this.name = name;
+        this.voted = false;
     }
 
     public Socket getSocket() {
@@ -54,6 +56,14 @@ public class ClientConnectionData {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public boolean getVoted() {
+        return voted;
+    }
+
+    public void setVoted(boolean v) {
+        this.voted = v;
     }
 
     

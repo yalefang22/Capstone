@@ -4,6 +4,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class ChatServerSocketListener  implements Runnable {
@@ -11,13 +12,17 @@ public class ChatServerSocketListener  implements Runnable {
 
     private ClientConnectionData client;
     private List<ClientConnectionData> clientList;
-    public List<String> clientListNames;
+    private List<String> clientListNames;
+    private boolean runningVoteKick;
+    private int votes = 0;
 
     public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList) {
         this.socket = socket;
         this.clientList = clientList;
         this.clientListNames = new ArrayList<>();
+        this.runningVoteKick = false;
     }
+
 
     private void setup() throws Exception {
         ObjectOutputStream socketOut = new ObjectOutputStream(socket.getOutputStream());
@@ -48,16 +53,52 @@ public class ChatServerSocketListener  implements Runnable {
 
     }
 
+    private void processVoteMessage(MessageCtoS_Vote m) {
+        if (!runningVoteKick) {
+            broadcast(new MessageStoC_Chat("No vote is running!"));
+            return;
+        }
+        if (client.getVoted()) {
+            broadcast(new MessageStoC_Chat(client.getUserName() + " has already voted!"));
+            return;
+        }
+        if (m.boolVote) {
+            votes++;
+            broadcast(new MessageStoC_Chat(client.getUserName() + " voted yes!"));
+            client.setVoted(true);
+            checkVotes();
+        }
+        else {
+            broadcast(new MessageStoC_Chat(client.getUserName() + " voted no!"));
+            client.setVoted(true);
+            checkVotes();
+        }
+    }
+
     private void callVoteKick(String m) {
         String userToKick = "";
         try {
             userToKick = m.substring(6);
         } catch (StringIndexOutOfBoundsException e) {
-            broadcast(new MessageStoC_Chat("User Does Not Exist!"));
+            broadcast(new MessageStoC_Chat("User does not exist!"));
             return;
         }
         if (!clientListNames.contains(userToKick)) {
-            broadcast(new MessageStoC_Chat("User Does Not Exist!"));
+            broadcast(new MessageStoC_Chat("User does not exist!"));
+        }
+        else {
+            String message = "Vote kick has started! " + clientListNames.size()/2 + " votes are necessary to kick " + userToKick;
+            votes=0;
+            runningVoteKick = true;
+            broadcast(new MessageStoC_Chat("Vote kick has started! Vote with \"/vote yes\" or \"/vote no\" to kick " + userToKick));
+            checkVotes();
+
+        }
+    }
+
+    private void checkVotes() {
+        if (votes > clientList.size()/2) {
+
         }
     }
 
@@ -112,6 +153,9 @@ public class ChatServerSocketListener  implements Runnable {
                 if (msg instanceof MessageCtoS_Quit) {
                     break;
                 }
+                else if (msg instanceof MessageCtoS_Vote) {
+                    processVoteMessage((MessageCtoS_Vote) msg);
+                }
                 else if (msg instanceof MessageCtoS_Chat) {
                     processChatMessage((MessageCtoS_Chat) msg);
                 }
@@ -130,9 +174,10 @@ public class ChatServerSocketListener  implements Runnable {
         } finally {
             //Remove client from clientList
             clientList.remove(client);
+            clientListNames.remove(client.getUserName());
 
             // Notify everyone that the user left.
-            broadcast(new MessageStoC_Exit(client.getUserName()), client);
+            broadcast(new MessageStoC_Exit(client.getUserName()));
 
             try {
                 client.getSocket().close();
