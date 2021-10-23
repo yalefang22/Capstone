@@ -20,6 +20,8 @@ public class ChatServer {
     //Make this a thread-safe collection
     private static final List<ClientConnectionData> clientList = Collections.synchronizedList(clientArrayList);
     private static final List<Boolean> placeHolder = Collections.synchronizedList(new ArrayList<>(Collections.singletonList(false)));
+    private static final List<Integer> countVotes = Collections.synchronizedList(new ArrayList<>(Arrays.asList(0, 0)));
+
 
     public static void main(String[] args) throws Exception {
         ExecutorService pool = Executors.newFixedThreadPool(100);
@@ -36,7 +38,7 @@ public class ChatServer {
                             socket.getPort(), socket.getLocalPort());
 
                     // handle client business in another thread
-                    pool.execute(new ChatServerSocketListener(socket, clientList, placeHolder));
+                    pool.execute(new ChatServerSocketListener(socket, clientList, placeHolder, countVotes));
                 }
 
                 // prevent exceptions from causing server from exiting.

@@ -15,14 +15,16 @@ public class ChatServerSocketListener  implements Runnable {
     private List<ClientConnectionData> clientList;
     //private boolean runningVoteKick;
     private List<Boolean> placeHolder;
+    private List<Integer> countVotes;
     private int yesVotes = 0;
     private int noVotes = 0;
     private ClientConnectionData userToKick;
 
-    public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList, List<Boolean> placeHolder) {
+    public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList, List<Boolean> placeHolder, List<Integer> countVotes) {
         this.socket = socket;
         this.clientList = clientList;
         this.placeHolder = placeHolder;
+        this.countVotes = countVotes;
         //this.runningVoteKick = placeHolder.get(0);
     }
 
@@ -71,13 +73,15 @@ public class ChatServerSocketListener  implements Runnable {
             return;
         }
         if (m.boolVote) {
-            yesVotes++;
+            yesVotes = countVotes.get(0)+1;
+            countVotes.set(0, yesVotes);
             broadcast(new MessageStoC_Chat(client.getUserName() + " voted yes!"));
             client.setVoted(true);
             checkVotes(userToKick);
         }
         else {
-            noVotes++;
+            noVotes = countVotes.get(1)+1;
+            countVotes.set(1, noVotes);
             broadcast(new MessageStoC_Chat(client.getUserName() + " voted no!"));
             client.setVoted(true);
             checkVotes(userToKick);
@@ -111,8 +115,10 @@ public class ChatServerSocketListener  implements Runnable {
                 }
                 clientList.get(i).setVoted(false);
             }
-            yesVotes=0;
-            noVotes=0;
+            //yesVotes=0;
+            countVotes.set(0, 0);
+            //noVotes=0;
+            countVotes.set(1, 0);
             //runningVoteKick = true;
             placeHolder.set(0, true);
 
@@ -133,7 +139,7 @@ public class ChatServerSocketListener  implements Runnable {
     }
 
     private void checkVotes(ClientConnectionData u){
-        if (yesVotes > clientList.size() / 2) {
+        if (countVotes.get(0) > clientList.size() / 2) {
             //Remove client from clientList
             broadcast(new MessageStoC_Chat(u.getUserName() + " will be kicked!"));
             placeHolder.set(0, false);
@@ -146,13 +152,13 @@ public class ChatServerSocketListener  implements Runnable {
             } catch (IOException ex) {
             }
         }
-        if (noVotes > clientList.size()/2) {
-            if (noVotes == 1) {
-                broadcast(new MessageStoC_Chat(noVotes + " person voted no! " + u.getUserName() + " will not be kicked!"));
+        if (countVotes.get(1) > clientList.size()/2) {
+            if (countVotes.get(1) == 1) {
+                broadcast(new MessageStoC_Chat(countVotes.get(1) + " person voted no! " + u.getUserName() + " will not be kicked!"));
                 placeHolder.set(0, false);
             }
             else {
-                broadcast(new MessageStoC_Chat(noVotes + " people voted no! " + u.getUserName() + " will not be kicked!"));
+                broadcast(new MessageStoC_Chat(countVotes.get(1) + " people voted no! " + u.getUserName() + " will not be kicked!"));
                 placeHolder.set(0, false);
             }
         }
