@@ -18,10 +18,10 @@ public class ChatServerSocketListener  implements Runnable {
     private int noVotes = 0;
     private ClientConnectionData userToKick;
 
-    public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList) {
+    public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList, boolean runningVoteKick) {
         this.socket = socket;
         this.clientList = clientList;
-        this.runningVoteKick = false;
+        this.runningVoteKick = runningVoteKick;
     }
 
 

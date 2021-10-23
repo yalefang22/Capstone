@@ -15,6 +15,7 @@ public class ChatServer {
     public static int noKickVotes = 0;
     //Make this a thread-safe collection
     private static final List<ClientConnectionData> clientList = Collections.synchronizedList(clientArrayList);
+    private static final boolean runningVoteKick = false;
 
     public static void main(String[] args) throws Exception {
         ExecutorService pool = Executors.newFixedThreadPool(100);
@@ -31,7 +32,7 @@ public class ChatServer {
                             socket.getPort(), socket.getLocalPort());
 
                     // handle client business in another thread
-                    pool.execute(new ChatServerSocketListener(socket, clientList));
+                    pool.execute(new ChatServerSocketListener(socket, clientList, runningVoteKick));
                 }
 
                 // prevent exceptions from causing server from exiting.
