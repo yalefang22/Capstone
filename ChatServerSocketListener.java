@@ -1,3 +1,4 @@
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -91,7 +92,6 @@ public class ChatServerSocketListener  implements Runnable {
             broadcast(new MessageStoC_Chat("User does not exist!"));
         }
         else {
-            String message = "Vote kick has started! " + clientListNames.size()/2 + " yesVotes are necessary to kick " + u;
             for (int i = 0; i < clientList.size(); i++) {
                 if (clientList.get(i).getUserName().equals(u)) {
                     userToKick = clientList.get(i);
@@ -101,7 +101,13 @@ public class ChatServerSocketListener  implements Runnable {
             yesVotes=0;
             noVotes=0;
             runningVoteKick = true;
-            broadcast(new MessageStoC_Chat("Vote kick has started! Vote with \"/vote yes\" or \"/vote no\" to kick " + u));
+
+            int votesNecessary = 1 + clientList.size()/2;
+            if (votesNecessary == 1)
+                broadcast(new MessageStoC_Chat("Vote kick has started! " + votesNecessary + " yes vote is necessary to kick " + u + ". Vote with \"/vote yes\" or \"/vote no\""));
+            else
+                broadcast(new MessageStoC_Chat("Vote kick has started! " + votesNecessary + " yes votes are necessary to kick " + u + ". Vote with \"/vote yes\" or \"/vote no\""));
+
             for (int i = 0; i < clientList.size(); i++) {
                 if (clientList.get(i).getUserName().equals(u)) {
                     userToKick = clientList.get(i);
@@ -112,15 +118,15 @@ public class ChatServerSocketListener  implements Runnable {
         }
     }
 
-    private void checkVotes(ClientConnectionData u) {
+    private void checkVotes(ClientConnectionData u){
         if (yesVotes > clientList.size() / 2) {
             //Remove client from clientList
+            broadcast(new MessageStoC_Chat(u.getUserName() + " will be kicked!"));
             clientList.remove(u);
             clientListNames.remove(u.getUserName());
 
             // Notify everyone that the user left.
             broadcast(new MessageStoC_Exit(u.getUserName()));
-
             try {
                 u.getSocket().close();
             } catch (IOException ex) {
@@ -179,7 +185,7 @@ public class ChatServerSocketListener  implements Runnable {
             MessageCtoS_Join joinMessage = (MessageCtoS_Join)in.readObject();
             client.setUserName(joinMessage.userName);
             clientListNames.add(client.getUserName());
-            broadcast(new MessageStoC_Welcome(joinMessage.userName), client);
+            broadcast(new MessageStoC_Welcome(joinMessage.userName));
 
             while (true) {
                 Message msg = (Message) in.readObject();
