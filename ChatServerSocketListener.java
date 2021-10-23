@@ -3,6 +3,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChatServerSocketListener  implements Runnable {
@@ -10,10 +11,12 @@ public class ChatServerSocketListener  implements Runnable {
 
     private ClientConnectionData client;
     private List<ClientConnectionData> clientList;
+    public List<String> clientListNames;
 
     public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList) {
         this.socket = socket;
         this.clientList = clientList;
+        this.clientListNames = new ArrayList<>();
     }
 
     private void setup() throws Exception {
@@ -31,6 +34,31 @@ public class ChatServerSocketListener  implements Runnable {
     private void processChatMessage(MessageCtoS_Chat m) {
         System.out.println("Chat received from " + client.getUserName() + " - broadcasting");
         broadcast(new MessageStoC_Chat(client.getUserName(), m.msg), client);
+        if (m.msg.startsWith("/users")) {
+            //broadcast(new MessageStoC_Chat(client.getUserName(), Integer.toString(clientList.size())), client);
+            for (String names: clientListNames) {
+                System.out.print("Clients: ");
+                System.out.print(names + " ");
+            }
+        }
+        if (m.msg.startsWith("/kick")) {
+            callVoteKick(m.msg);
+        }
+
+    }
+
+    private void callVoteKick(String m) {
+        String userToKick = "";
+        try {
+            userToKick = m.substring(6);
+        } catch (StringIndexOutOfBoundsException e) {
+            System.out.println("User Does Not Exist!");
+            return;
+        }
+        if (!clientListNames.contains(userToKick)) {
+            //broadcast(new MessageCtoS_Chat("User Does Not Exist!"), client);
+            System.out.println("User Does Not Exist!");
+        }
     }
 
     /**
