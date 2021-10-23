@@ -13,7 +13,6 @@ public class ChatServerSocketListener  implements Runnable {
 
     private ClientConnectionData client;
     private List<ClientConnectionData> clientList;
-    private List<String> clientListNames;
     private boolean runningVoteKick;
     private int yesVotes = 0;
     private int noVotes = 0;
@@ -22,7 +21,6 @@ public class ChatServerSocketListener  implements Runnable {
     public ChatServerSocketListener(Socket socket, List<ClientConnectionData> clientList) {
         this.socket = socket;
         this.clientList = clientList;
-        this.clientListNames = new ArrayList<>();
         this.runningVoteKick = false;
     }
 
@@ -41,12 +39,12 @@ public class ChatServerSocketListener  implements Runnable {
 
     private void processChatMessage(MessageCtoS_Chat m) {
         System.out.println("Chat received from " + client.getUserName() + " - broadcasting");
-        broadcast(new MessageStoC_Chat(client.getUserName(), m.msg), client);
+        broadcast(new MessageStoC_Chat(client.getUserName(), m.msg));
         if (m.msg.startsWith("/users")) {
             //broadcast(new MessageStoC_Chat(client.getUserName(), Integer.toString(clientList.size())), client);
             broadcast(new MessageStoC_Chat("Users: "));
-            for (String names: clientListNames) {
-                broadcast(new MessageStoC_Chat(names));
+            for (ClientConnectionData client: clientList) {
+                broadcast(new MessageStoC_Chat(client.getUserName()));
             }
             System.out.println();
         }
@@ -88,7 +86,15 @@ public class ChatServerSocketListener  implements Runnable {
             broadcast(new MessageStoC_Chat("User does not exist!"));
             return;
         }
-        if (!clientListNames.contains(u)) {
+
+        boolean uInList = false;
+        for (int i = 0; i < clientList.size(); i++) {
+            if (clientList.get(i).getUserName().equals(u)) {
+                uInList = true;
+            }
+        }
+
+        if (!uInList) {
             broadcast(new MessageStoC_Chat("User does not exist!"));
         }
         else {
@@ -123,7 +129,6 @@ public class ChatServerSocketListener  implements Runnable {
             //Remove client from clientList
             broadcast(new MessageStoC_Chat(u.getUserName() + " will be kicked!"));
             clientList.remove(u);
-            clientListNames.remove(u.getUserName());
 
             // Notify everyone that the user left.
             broadcast(new MessageStoC_Exit(u.getUserName()));
@@ -184,7 +189,6 @@ public class ChatServerSocketListener  implements Runnable {
 
             MessageCtoS_Join joinMessage = (MessageCtoS_Join)in.readObject();
             client.setUserName(joinMessage.userName);
-            clientListNames.add(client.getUserName());
             broadcast(new MessageStoC_Welcome(joinMessage.userName));
 
             while (true) {
@@ -213,7 +217,6 @@ public class ChatServerSocketListener  implements Runnable {
         } finally {
             //Remove client from clientList
             clientList.remove(client);
-            clientListNames.remove(client.getUserName());
 
             // Notify everyone that the user left.
             broadcast(new MessageStoC_Exit(client.getUserName()), client);
