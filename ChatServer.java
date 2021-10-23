@@ -21,6 +21,7 @@ public class ChatServer {
     private static final List<ClientConnectionData> clientList = Collections.synchronizedList(clientArrayList);
     private static final List<Boolean> placeHolder = Collections.synchronizedList(new ArrayList<>(Collections.singletonList(false)));
     private static final List<Integer> countVotes = Collections.synchronizedList(new ArrayList<>(Arrays.asList(0, 0)));
+    private static final List<ClientConnectionData> userToKick = Collections.synchronizedList(new ArrayList<>());
 
 
     public static void main(String[] args) throws Exception {
@@ -38,7 +39,7 @@ public class ChatServer {
                             socket.getPort(), socket.getLocalPort());
 
                     // handle client business in another thread
-                    pool.execute(new ChatServerSocketListener(socket, clientList, placeHolder, countVotes));
+                    pool.execute(new ChatServerSocketListener(socket, clientList, placeHolder, countVotes, userToKick));
                 }
 
                 // prevent exceptions from causing server from exiting.
