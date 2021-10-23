@@ -8,6 +8,10 @@ public class ChatClientSocketListener implements Runnable {
     }
 
     private void processChatMessage(MessageStoC_Chat m) {
+        if (m.userName == null) {
+            System.out.println(m.msg);
+            return;
+        }
         System.out.println(m.userName + ": " + m.msg);
     }
 

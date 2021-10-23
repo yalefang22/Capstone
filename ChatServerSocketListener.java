@@ -36,9 +36,9 @@ public class ChatServerSocketListener  implements Runnable {
         broadcast(new MessageStoC_Chat(client.getUserName(), m.msg), client);
         if (m.msg.startsWith("/users")) {
             //broadcast(new MessageStoC_Chat(client.getUserName(), Integer.toString(clientList.size())), client);
+            broadcast(new MessageStoC_Chat("Users: "));
             for (String names: clientListNames) {
-                System.out.print("Clients: ");
-                System.out.print(names + " ");
+                broadcast(new MessageStoC_Chat(names));
             }
             System.out.println();
         }
@@ -53,11 +53,11 @@ public class ChatServerSocketListener  implements Runnable {
         try {
             userToKick = m.substring(6);
         } catch (StringIndexOutOfBoundsException e) {
-            broadcast(new MessageStoC_Chat("Server", "User Does Not Exist!"), client);
+            broadcast(new MessageStoC_Chat("User Does Not Exist!"));
             return;
         }
         if (!clientListNames.contains(userToKick)) {
-            broadcast(new MessageStoC_Chat("Server", "User Does Not Exist!"), client);
+            broadcast(new MessageStoC_Chat("User Does Not Exist!"));
         }
     }
 
@@ -73,6 +73,22 @@ public class ChatServerSocketListener  implements Runnable {
                 if ((c != skipClient) && (c.getUserName()!= null)){
                     c.getOut().writeObject(m);
                 }
+            }
+        } catch (Exception ex) {
+            System.out.println("broadcast caught exception: " + ex);
+            ex.printStackTrace();
+        }
+    }
+
+    public void broadcast(Message m) {
+        try {
+            System.out.println("broadcasting: " + m);
+            for (ClientConnectionData c : clientList){
+                // if c equals skipClient, then c.
+                // or if c hasn't set a userName yet (still joining the server)
+                if (c.getUserName() != null)
+                    c.getOut().writeObject(m);
+
             }
         } catch (Exception ex) {
             System.out.println("broadcast caught exception: " + ex);

@@ -7,7 +7,13 @@ public class MessageStoC_Chat extends Message {
         this.msg = msg;
     }
 
+    public MessageStoC_Chat(String msg) {
+        this.msg = msg;
+    }
+
     public String toString() {
         return "Chat Message from " + userName + ": " + msg;
     }
+
+
 }
